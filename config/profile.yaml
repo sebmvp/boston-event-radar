@@ -1,0 +1,108 @@
+name: Sebastian
+role: masters_student
+university: UMass Amherst
+program: Data Analytics and Business
+student: true
+willing_to_volunteer: true
+prefer_free: true
+max_paid_usd: 25
+
+target_geo:
+  label: Boston metro
+  latitude: 42.3601
+  longitude: -71.0589
+  max_km: 35
+  preferred_cities:
+    - Boston
+    - Cambridge
+    - Somerville
+    - Brookline
+    - Medford
+    - Allston
+    - Brighton
+  virtual_ok: true
+  amherst_penalty: true  # on-campus Amherst is far unless exceptional
+
+priorities:
+  high:
+    - ai
+    - artificial intelligence
+    - machine learning
+    - llm
+    - genai
+    - data engineering
+    - data analytics
+    - analytics
+    - fintech
+    - startup
+    - startups
+    - founder
+    - entrepreneurship
+    - venture
+    - blockchain
+    - crypto
+    - web3
+    - engineering
+    - technology
+    - applied ai
+    - hiring
+    - networking
+    - investor
+    - operator
+  event_types_high:
+    - conference
+    - tech week
+    - hackathon
+    - mixer
+    - demo
+    - showcase
+    - workshop
+    - panel
+    - career
+    - fireside
+    - office hours
+    - pitch
+  event_types_low:
+    - nightlife
+    - party
+    - comedy
+    - concert
+    - sports
+    - fitness
+    - pilates
+    - yoga
+    - hike
+    - happy hour only
+    - dating
+
+scoring:
+  weights:
+    topic_relevance: 25
+    professional_value: 20
+    access_affordability: 15
+    student_volunteer: 10
+    organizer_quality: 8
+    scarcity_urgency: 8
+    travel: 7
+    uniqueness: 4
+    confidence: 3
+  high_priority_threshold: 70
+  digest_threshold: 50
+
+organizer_boosts:
+  - Fintech Sandbox
+  - Boston Fintech Week
+  - Boston Blockchain Week
+  - Boston AI Week
+  - MassChallenge
+  - Venture Cafe
+  - MIT
+  - Harvard
+  - MassRobotics
+  - The Engine
+  - CIC
+  - Greentown Labs
+  - Tough Tech
+  - Startup Boston
+  - Northeastern
+  - Babson

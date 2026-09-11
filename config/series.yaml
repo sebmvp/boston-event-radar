@@ -1,0 +1,51 @@
+# Recurring / flagship events. Historical facts are NOT current access.
+series:
+  - id: boston-fintech-week
+    name: Boston Fintech Week
+    aliases:
+      - Boston FinTech Week
+      - Fintech That Thinks
+      - Fintech Sandbox Innovation Forum
+    organizer: Fintech Sandbox
+    expected_month: 9
+    watch_urls:
+      - https://bostonfintechweek.com/
+      - https://bostonfintechweek.org/
+      - https://luma.com/fintechthatthinks
+    historical:
+      student_tickets: true
+      founder_tickets: true
+      early_bird: true
+      volunteer: null  # unknown — do not infer
+    notes: "Annual. Student tickets historically limited and ID-gated."
+
+  - id: boston-blockchain-week
+    name: Boston Blockchain Week
+    aliases:
+      - Boston Blockchain Week
+      - BBW
+    organizer: null
+    expected_month: 9
+    watch_urls: []
+    historical:
+      volunteer: true
+      student_tickets: null
+    notes: "Volunteer path existed in a prior year. That is historical only."
+
+  - id: boston-ai-week
+    name: Boston AI Week
+    aliases:
+      - Boston AI Week
+    organizer: null
+    expected_month: null
+    watch_urls: []
+    historical: {}
+
+  - id: tough-tech-week
+    name: Tough Tech Week
+    aliases:
+      - Tough Tech Week
+    organizer: The Engine
+    expected_month: null
+    watch_urls: []
+    historical: {}

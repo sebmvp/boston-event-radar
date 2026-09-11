@@ -1,0 +1,258 @@
+# Configuration-driven source registry.
+# Application code should not hard-code universities or orgs.
+
+http:
+  timeout_sec: 25
+  retries: 3
+  per_host_delay_sec: 1.2
+  cache_ttl_sec: 3600
+  user_agent: "BostonEventRadar/0.1 (personal research; +https://github.com/sebmvp/boston-event-radar)"
+
+discover:
+  lookahead_days: 75
+  luma_pages: 4
+  luma_page_size: 50
+  localist_per_page: 50
+  hydrate_luma_details_for_top_n: 15
+
+sources:
+  - id: luma_boston_ai
+    type: luma_discover
+    enabled: true
+    category: event_platform
+    latitude: 42.3601
+    longitude: -71.0589
+    slugs: [ai]
+    city_allowlist:
+      - Boston
+      - Cambridge
+      - Somerville
+      - Brookline
+      - Medford
+      - Allston
+      - Brighton
+      - Quincy
+      - Newton
+      - Watertown
+      - Waltham
+      - Arlington
+      - Belmont
+      - Charlestown
+      - Dorchester
+      - Roxbury
+      - Jamaica Plain
+      - Natick
+    notes: "Luma public discover JSON used by luma.com"
+
+  - id: luma_boston_crypto
+    type: luma_discover
+    enabled: true
+    category: event_platform
+    latitude: 42.3601
+    longitude: -71.0589
+    slugs: [crypto]
+    city_allowlist:
+      - Boston
+      - Cambridge
+      - Somerville
+      - Brookline
+
+  - id: luma_fintech_that_thinks
+    type: luma_event
+    enabled: true
+    category: ecosystem
+    slug: fintechthatthinks
+    notes: "Flagship Boston Fintech Week forum on Luma"
+
+  - id: html_boston_fintech_week
+    type: html_page
+    enabled: true
+    category: ecosystem
+    url: https://bostonfintechweek.com/
+    title_hint: Boston Fintech Week
+    organizer_hint: Fintech Sandbox
+    city_hint: Boston
+
+  - id: mit_localist
+    type: localist
+    enabled: true
+    category: university
+    org: MIT
+    base_url: https://calendar.mit.edu
+    days: 60
+    filter_by_keywords: true
+
+  - id: umass_amherst_localist
+    type: localist
+    enabled: true
+    category: university
+    org: UMass Amherst
+    base_url: https://events.umass.edu
+    days: 60
+    filter_by_keywords: true
+    far_campus: true
+
+  - id: neu_localist
+    type: localist
+    enabled: true
+    category: university
+    org: Northeastern
+    base_url: https://calendar.northeastern.edu
+    days: 45
+    filter_by_keywords: true
+
+  - id: mit_ics
+    type: ics
+    enabled: true
+    category: university
+    org: MIT
+    url: https://calendar.mit.edu/calendar.ics
+    filter_by_keywords: true
+    notes: "Public Localist ICS; filtered client-side"
+
+  # --- registry placeholders (disabled until an adapter + public URL exist) ---
+  - id: harvard_localist
+    type: localist
+    enabled: false
+    category: university
+    org: Harvard
+    base_url: https://events.harvard.edu
+    notes: "API returned 403 (Akamai) on 2026-09-11"
+
+  - id: bu_calendar
+    type: html_page
+    enabled: false
+    category: university
+    org: Boston University
+    url: https://www.bu.edu/calendar/
+
+  - id: bc_calendar
+    type: localist
+    enabled: false
+    category: university
+    org: Boston College
+
+  - id: tufts_calendar
+    type: localist
+    enabled: false
+    category: university
+    org: Tufts
+
+  - id: babson_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Babson
+    url: https://www.babson.edu/events
+
+  - id: bentley_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Bentley
+
+  - id: brandeis_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Brandeis
+
+  - id: umass_boston_events
+    type: html_page
+    enabled: false
+    category: university
+    org: UMass Boston
+
+  - id: umass_lowell_events
+    type: html_page
+    enabled: false
+    category: university
+    org: UMass Lowell
+
+  - id: suffolk_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Suffolk
+
+  - id: wentworth_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Wentworth
+
+  - id: olin_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Olin
+
+  - id: wellesley_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Wellesley
+
+  - id: emerson_events
+    type: html_page
+    enabled: false
+    category: university
+    org: Emerson
+
+  - id: isenberg_events
+    type: html_page
+    enabled: false
+    category: university
+    org: UMass Amherst Isenberg
+
+  - id: venture_cafe_cambridge
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: Venture Cafe Cambridge
+    url: https://venturecafecambridge.org/events/
+
+  - id: masschallenge_events
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: MassChallenge
+    url: https://masschallenge.org/events/
+
+  - id: massrobotics
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: MassRobotics
+
+  - id: cic
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: CIC
+
+  - id: greentown_labs
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: Greentown Labs
+
+  - id: the_engine
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: The Engine
+
+  - id: startup_boston
+    type: html_page
+    enabled: false
+    category: ecosystem
+    org: Startup Boston
+    url: https://www.startupboston.com/
+
+  - id: newsletter_inbox
+    type: newsletter
+    enabled: false
+    category: newsletter
+    path: data/newsletters/
+    notes: "Drop .txt/.eml files here later"

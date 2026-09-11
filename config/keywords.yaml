@@ -1,0 +1,43 @@
+# Client-side topic filters applied after fetch.
+# Keep these conservative: missing a keyword should not drop a high-signal source
+# event that already came from a topical Luma slug.
+
+include:
+  - ai
+  - artificial intelligence
+  - machine learning
+  - data
+  - analytics
+  - fintech
+  - startup
+  - founder
+  - entrepreneur
+  - venture
+  - blockchain
+  - crypto
+  - hackathon
+  - engineer
+  - software
+  - product
+  - llm
+  - networking
+  - career
+  - hiring
+  - investor
+  - innovation
+  - robotics
+  - climate
+  - biotech
+  - healthtech
+
+exclude_unless_high_signal:
+  - nightlife
+  - comedy
+  - open mic
+  - dating
+  - club night
+  - rave
+  - sports vs
+  - pilates
+  - yoga
+  - church
