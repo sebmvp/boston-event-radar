@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from event_radar.models import AccessRoute, AccessType, EventRecord, ObservationKind, SourceRef
 from event_radar.processing.dedupe import deduplicate, normalize_title, same_event
@@ -72,3 +72,17 @@ def test_merge_keeps_student_route_from_secondary_source():
     assert AccessType.STANDARD_TICKET in types
     assert AccessType.STUDENT_TICKET in types
     assert {s.source_id for s in merged[0].sources} == {"luma", "html"}
+
+
+def test_does_not_merge_two_different_ai_events():
+    now = datetime(2026, 9, 15, tzinfo=UTC)
+    a = _event("AI Mixer Boston", "https://luma.com/mixer-a", start_at=now, city="Boston")
+    b = _event(
+        "AI Mixer Boston Volume 2",
+        "https://luma.com/mixer-b",
+        start_at=now + timedelta(days=7),
+        city="Boston",
+    )
+    assert not same_event(a, b)
+    merged = deduplicate([a, b])
+    assert len(merged) == 2

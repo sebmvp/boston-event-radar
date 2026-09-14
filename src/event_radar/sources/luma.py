@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 
 from event_radar.http_client import FetchError
 from event_radar.models import LocationMode, RawEvent
+from event_radar.processing.geo import city_allowed
 from event_radar.sources.base import FetchContext, SourceFetchResult, finish_run, start_run
 
 API_BASE = "https://api.lu.ma"
@@ -57,13 +58,16 @@ def _location_mode(event: dict[str, Any]) -> LocationMode:
     return LocationMode.UNKNOWN
 
 
-def _city_ok(city: str | None, allowlist: list[str]) -> bool:
-    if not allowlist:
-        return True
-    if not city:
-        return True
-    city_l = city.lower()
-    return any(city_l.startswith(item.lower()) for item in allowlist)
+def _keep_geo(raw: RawEvent, allowlist: list[str], max_km: float = 40) -> bool:
+    return city_allowed(
+        city=raw.city,
+        latitude=raw.latitude,
+        longitude=raw.longitude,
+        allowlist=allowlist,
+        virtual=raw.location_mode == LocationMode.VIRTUAL,
+        max_km=max_km,
+        allow_missing=False,
+    )
 
 
 def raw_from_luma_entry(
@@ -86,6 +90,7 @@ def raw_from_luma_entry(
     if not organizer:
         organizer = calendar.get("name")
     url = f"{WEB_ORIGIN}/{slug}"
+    calendar_api_id = event.get("calendar_api_id") or calendar.get("api_id")
     return RawEvent(
         source_id=source_id,
         source_type="luma_discover",
@@ -113,7 +118,13 @@ def raw_from_luma_entry(
         sold_out=ticket.get("is_sold_out"),
         ticket_types=[],
         fetched_at=fetched_at,
-        raw={"guest_count": entry.get("guest_count"), "ticket_info": ticket},
+        raw={
+            "guest_count": entry.get("guest_count"),
+            "ticket_info": ticket,
+            "calendar_api_id": calendar_api_id,
+            "calendar_name": calendar.get("name") or organizer,
+            "slug": slug,
+        },
     )
 
 
@@ -179,7 +190,7 @@ class LumaDiscoverAdapter:
                             if raw is None:
                                 errors += 1
                                 continue
-                            if not _city_ok(raw.city, allowlist):
+                            if not _keep_geo(raw, allowlist):
                                 continue
                             events.append(raw)
                         except Exception:
@@ -222,4 +233,75 @@ class LumaEventAdapter:
             finish_run(run, events=events, error=str(exc))
         except Exception as exc:  # noqa: BLE001
             finish_run(run, events=events, error=str(exc))
+        return SourceFetchResult(run=run, events=events)
+
+
+def fetch_luma_detail(ctx: FetchContext, slug: str, *, source_id: str) -> RawEvent | None:
+    url = f"{API_BASE}/event/get?{urlencode({'event_api_id': slug})}"
+    data = ctx.fetcher.get_json(url, headers=_luma_headers())
+    return raw_from_luma_detail(data, source_id=source_id, fetched_at=ctx.now)
+
+
+def luma_slug_from_url(url: str | None) -> str | None:
+    if not url:
+        return None
+    if "luma.com/" not in url and "lu.ma/" not in url:
+        return None
+    path = url.split("luma.com/", 1)[-1] if "luma.com/" in url else url.split("lu.ma/", 1)[-1]
+    slug = path.split("?")[0].strip("/")
+    if not slug or slug.startswith("calendar/"):
+        return None
+    return slug.split("/")[0]
+
+
+class LumaCalendarAdapter:
+    """Follow a public Luma calendar via calendar/get-items (same JSON the website uses)."""
+
+    source_type = "luma_calendar"
+
+    def __init__(self, config: dict[str, Any]) -> None:
+        self.config = config
+        self.source_id = config["id"]
+
+    def discover(self, ctx: FetchContext) -> SourceFetchResult:
+        run = start_run(self.source_id, self.source_type, ctx.now)
+        events: list[RawEvent] = []
+        errors = 0
+        cal_id = self.config.get("calendar_api_id")
+        if not cal_id:
+            finish_run(run, events=[], error="missing calendar_api_id")
+            return SourceFetchResult(run=run, events=[])
+        pages = int(ctx.extra.get("luma_pages") or 4)
+        page_size = int(ctx.extra.get("luma_page_size") or 50)
+        allowlist = self.config.get("city_allowlist") or []
+        try:
+            cursor = None
+            for _ in range(pages):
+                params = {"calendar_api_id": cal_id, "pagination_limit": str(page_size)}
+                if cursor:
+                    params["pagination_cursor"] = cursor
+                url = f"{API_BASE}/calendar/get-items?{urlencode(params)}"
+                data = ctx.fetcher.get_json(url, headers=_luma_headers())
+                for entry in data.get("entries") or []:
+                    try:
+                        raw = raw_from_luma_entry(entry, source_id=self.source_id, fetched_at=ctx.now)
+                        if raw is None:
+                            errors += 1
+                            continue
+                        raw.source_type = "luma_calendar"
+                        if allowlist and not _keep_geo(raw, allowlist):
+                            continue
+                        events.append(raw)
+                    except Exception:
+                        errors += 1
+                if not data.get("has_more"):
+                    break
+                cursor = data.get("next_cursor")
+                if not cursor:
+                    break
+            finish_run(run, events=events, parse_errors=errors)
+        except FetchError as exc:
+            finish_run(run, events=events, parse_errors=errors, error=str(exc))
+        except Exception as exc:  # noqa: BLE001
+            finish_run(run, events=events, parse_errors=errors, error=str(exc))
         return SourceFetchResult(run=run, events=events)

@@ -23,6 +23,13 @@ CONFIG_DIR = ROOT / "config"
 DATA_DIR = Path(os.environ["EVENT_RADAR_DATA"]).resolve() if os.environ.get("EVENT_RADAR_DATA") else ROOT / "data"
 
 
+def db_path() -> Path:
+    env = os.environ.get("EVENT_RADAR_DB")
+    if env:
+        return Path(env).resolve()
+    return DATA_DIR / "events.db"
+
+
 def load_yaml(path: Path) -> Any:
     with path.open(encoding="utf-8") as fh:
         return yaml.safe_load(fh) or {}

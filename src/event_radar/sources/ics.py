@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from icalendar import Calendar
 
@@ -12,16 +13,24 @@ from event_radar.models import LocationMode, RawEvent
 from event_radar.sources.base import FetchContext, SourceFetchResult, finish_run, start_run
 
 
-def _as_dt(value: Any) -> datetime | None:
+def _as_dt(value: Any, default_tz: str = "America/New_York") -> datetime | None:
     if value is None:
         return None
     dt = getattr(value, "dt", value)
+    tzid = None
+    params = getattr(value, "params", None)
+    if params is not None:
+        tzid = params.get("TZID")
     if isinstance(dt, datetime):
         if dt.tzinfo is None:
-            return dt.replace(tzinfo=UTC)
+            try:
+                tz = ZoneInfo(str(tzid)) if tzid else ZoneInfo(default_tz)
+            except Exception:
+                tz = ZoneInfo(default_tz)
+            return dt.replace(tzinfo=tz)
         return dt
     try:
-        return datetime.combine(dt, datetime.min.time(), tzinfo=UTC)
+        return datetime.combine(dt, datetime.min.time(), tzinfo=ZoneInfo(default_tz))
     except TypeError:
         return None
 
@@ -45,7 +54,7 @@ def raw_from_vevent(component: Any, *, source_id: str, source_url: str, fetched_
         organizer=org,
         start_at=_as_dt(component.get("dtstart")),
         end_at=_as_dt(component.get("dtend")),
-        timezone=None,
+        timezone="America/New_York",
         venue=location,
         city=None,
         address=location,

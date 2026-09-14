@@ -6,7 +6,9 @@ include:
   - ai
   - artificial intelligence
   - machine learning
-  - data
+  - data science
+  - data analytics
+  - data engineering
   - analytics
   - fintech
   - startup
@@ -16,19 +18,21 @@ include:
   - blockchain
   - crypto
   - hackathon
-  - engineer
   - software
-  - product
   - llm
-  - networking
-  - career
-  - hiring
   - investor
   - innovation
   - robotics
   - climate
+  - climatetech
   - biotech
   - healthtech
+  - demo day
+  - career fair
+  - mixer
+  - applied ai
+  - deep tech
+  - tough tech
 
 exclude_unless_high_signal:
   - nightlife
@@ -41,3 +45,4 @@ exclude_unless_high_signal:
   - pilates
   - yoga
   - church
+  - intramural

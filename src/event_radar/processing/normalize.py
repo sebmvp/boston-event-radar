@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from html import unescape
 
 from event_radar.models import EventRecord, RawEvent, SourceRef, event_id_for
 from event_radar.processing.access import extract_access
@@ -16,11 +17,13 @@ def normalize(raw: RawEvent, now: datetime | None = None) -> EventRecord:
     end = raw.end_at
     if end and end.tzinfo is None:
         end = end.replace(tzinfo=UTC)
+    title = unescape(raw.title.strip())
+    description = unescape(raw.description) if raw.description else None
     canonical = raw.canonical_url or raw.source_url
     record = EventRecord(
-        id=event_id_for(raw.title, start, raw.city),
-        title=raw.title.strip(),
-        description=raw.description,
+        id=event_id_for(title, start, raw.city),
+        title=title,
+        description=description,
         organizer=raw.organizer,
         sources=[
             SourceRef(
@@ -36,6 +39,7 @@ def normalize(raw: RawEvent, now: datetime | None = None) -> EventRecord:
         canonical_url=canonical,
         discovered_at=now,
         last_checked_at=now,
+        last_verified_at=now,
         start_at=start,
         end_at=end,
         timezone=raw.timezone,
@@ -51,7 +55,13 @@ def normalize(raw: RawEvent, now: datetime | None = None) -> EventRecord:
         standard_price=_standard_price(raw),
         lowest_known_price=_lowest_price(raw),
         access_routes=extract_access(raw, now=now),
-        extra={"source_type": raw.source_type},
+        extra={
+            "source_type": raw.source_type,
+            "calendar_api_id": (raw.raw or {}).get("calendar_api_id"),
+            "calendar_name": (raw.raw or {}).get("calendar_name"),
+            "luma_slug": (raw.raw or {}).get("slug"),
+            "related_pages": (raw.raw or {}).get("related_pages") or [],
+        },
     )
     record.lowest_known_price = _lowest_from_routes(record)
     return record

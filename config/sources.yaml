@@ -57,6 +57,41 @@ sources:
       - Somerville
       - Brookline
 
+  - id: luma_boston_tech
+    type: luma_discover
+    enabled: true
+    category: event_platform
+    latitude: 42.3601
+    longitude: -71.0589
+    slugs: [tech]
+    city_allowlist:
+      - Boston
+      - Cambridge
+      - Somerville
+      - Brookline
+      - Medford
+      - Allston
+      - Brighton
+      - Newton
+      - Watertown
+      - Waltham
+
+  - id: luma_boston_climate
+    type: luma_discover
+    enabled: true
+    category: event_platform
+    latitude: 42.3601
+    longitude: -71.0589
+    slugs: [climate]
+    city_allowlist:
+      - Boston
+      - Cambridge
+      - Somerville
+      - Brookline
+      - Newton
+      - Watertown
+      - Waltham
+
   - id: luma_fintech_that_thinks
     type: luma_event
     enabled: true
@@ -72,6 +107,8 @@ sources:
     title_hint: Boston Fintech Week
     organizer_hint: Fintech Sandbox
     city_hint: Boston
+    related_urls:
+      - https://bostonfintechweek.org/faqs/
 
   - id: mit_localist
     type: localist
@@ -103,12 +140,12 @@ sources:
 
   - id: mit_ics
     type: ics
-    enabled: true
+    enabled: false
     category: university
     org: MIT
     url: https://calendar.mit.edu/calendar.ics
     filter_by_keywords: true
-    notes: "Public Localist ICS; filtered client-side"
+    notes: "Duplicates MIT Localist; disabled to cut noise. Re-enable if Localist dies."
 
   # --- registry placeholders (disabled until an adapter + public URL exist) ---
   - id: harvard_localist
@@ -126,11 +163,15 @@ sources:
     org: Boston University
     url: https://www.bu.edu/calendar/
 
-  - id: bc_calendar
+  - id: bc_localist
     type: localist
     enabled: false
     category: university
     org: Boston College
+    base_url: https://events.bc.edu
+    days: 45
+    filter_by_keywords: true
+    notes: "JSON exists but Python/certifi SSL verify failed 2026-09-14 (curl 200). Re-enable when chain is public-CA complete."
 
   - id: tufts_calendar
     type: localist
@@ -145,11 +186,15 @@ sources:
     org: Babson
     url: https://www.babson.edu/events
 
-  - id: bentley_events
-    type: html_page
+  - id: bentley_localist
+    type: localist
     enabled: false
     category: university
     org: Bentley
+    base_url: https://events.bentley.edu
+    days: 45
+    filter_by_keywords: true
+    notes: "JSON exists but Python/certifi SSL verify failed 2026-09-14 (curl 200)."
 
   - id: brandeis_events
     type: html_page
@@ -169,11 +214,14 @@ sources:
     category: university
     org: UMass Lowell
 
-  - id: suffolk_events
-    type: html_page
-    enabled: false
+  - id: suffolk_localist
+    type: localist
+    enabled: true
     category: university
     org: Suffolk
+    base_url: https://events.suffolk.edu
+    days: 45
+    filter_by_keywords: true
 
   - id: wentworth_events
     type: html_page
@@ -220,10 +268,32 @@ sources:
     url: https://masschallenge.org/events/
 
   - id: massrobotics
-    type: html_page
-    enabled: false
+    type: tribe
+    enabled: true
     category: ecosystem
     org: MassRobotics
+    base_url: https://www.massrobotics.org
+    city_hint: Boston
+    city_allowlist:
+      - Boston
+      - Cambridge
+      - Somerville
+      - Brookline
+    notes: "The Events Calendar public REST API"
+
+  - id: greentown_labs
+    type: tribe
+    enabled: true
+    category: ecosystem
+    org: Greentown Labs
+    base_url: https://www.greentownlabs.com
+    city_hint: Somerville
+    city_allowlist:
+      - Somerville
+      - Boston
+      - Cambridge
+      - Brookline
+    notes: "The Events Calendar public REST API; Houston events dropped by city allowlist"
 
   - id: cic
     type: html_page
@@ -231,11 +301,12 @@ sources:
     category: ecosystem
     org: CIC
 
-  - id: greentown_labs
+  - id: greentown_labs_html
     type: html_page
     enabled: false
     category: ecosystem
     org: Greentown Labs
+    url: https://www.greentownlabs.com/events/
 
   - id: the_engine
     type: html_page

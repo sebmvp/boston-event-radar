@@ -54,21 +54,25 @@ Each adapter implements `SourceAdapter.discover(ctx) -> SourceFetchResult`.
 |---|---|---|
 | `luma_discover` | yes | lat/lng + optional category slugs |
 | `luma_event` | yes | slug or event_api_id (detail + ticket types) |
+| `luma_calendar` | yes | `calendar_api_id` via `calendar/get-items` |
 | `localist` | yes | `{base_url}/api/2/events` |
+| `tribe` | yes | WordPress The Events Calendar `/wp-json/tribe/events/v1/events` |
 | `ics` | yes | public ICS URL |
-| `html_page` | yes | public event/marketing page (JSON-LD + text signals) |
+| `html_page` | yes | public page + optional `related_urls` |
+| `rss` | yes | RSS 2 / Atom |
 | `newsletter` | stub | raw email/text file |
-| `rss` | reserved | Atom/RSS URL |
 
 ## Storage
 
 SQLite (`data/events.db`):
 
-- `events` — normalized event + score
-- `event_sources` — provenance rows
-- `access_routes` — ways in
-- `series` — recurring watch list
+- `events` — JSON payload of the normalized `EventRecord` (including access
+  routes, sources, score). Extra columns for list/sort.
 - `source_runs` — observability
+- `organizers` — calendars/orgs discovered from events
+
+This is deliberately not Postgres. Repeated `discover` upserts/merges by
+id and canonical URL.
 
 ## Cost
 

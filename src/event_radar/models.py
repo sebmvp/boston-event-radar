@@ -112,6 +112,7 @@ class EventRecord(BaseModel):
     canonical_url: str
     discovered_at: datetime
     last_checked_at: datetime
+    last_verified_at: datetime | None = None
     start_at: datetime | None = None
     end_at: datetime | None = None
     timezone: str | None = None
@@ -170,6 +171,18 @@ class EventRecord(BaseModel):
             return (type_rank, price, -route.confidence)
 
         return sorted(current, key=sort_key)[0]
+
+
+class OrganizerRecord(BaseModel):
+    id: str
+    name: str
+    kind: str = "unknown"
+    calendar_api_id: str | None = None
+    urls: list[str] = Field(default_factory=list)
+    discovered_from: str | None = None
+    first_seen_at: datetime
+    last_seen_at: datetime
+    event_count: int = 1
 
 
 class RecurringSeries(BaseModel):

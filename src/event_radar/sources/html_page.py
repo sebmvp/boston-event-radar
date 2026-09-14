@@ -95,11 +95,7 @@ def parse_html_event(
                 )
             )
     page_text = soup.get_text(" ", strip=True)
-    hrefs = [
-        a.get("href")
-        for a in soup.find_all("a", href=True)
-        if a.get("href")
-    ]
+    hrefs = [href for a in soup.find_all("a", href=True) if isinstance((href := a.get("href")), str)]
     interesting = [
         href
         for href in hrefs
@@ -161,6 +157,20 @@ class HtmlPageAdapter:
                 organizer_hint=self.config.get("organizer_hint"),
                 city_hint=self.config.get("city_hint"),
             )
+            related_pages: list[dict[str, str]] = []
+            for rel in self.config.get("related_urls") or []:
+                try:
+                    rel_html = ctx.fetcher.get_text(rel)
+                    rel_text = BeautifulSoup(rel_html, "lxml").get_text(" ", strip=True)[:8000]
+                    related_pages.append({"url": rel, "text": rel_text})
+                except Exception:
+                    continue
+            if related_pages:
+                for ev in events:
+                    ev.raw = {**(ev.raw or {}), "related_pages": related_pages}
+                    srcs = list(ev.raw.get("evidence_urls") or [])
+                    srcs.extend(p["url"] for p in related_pages)
+                    ev.raw["evidence_urls"] = srcs
             finish_run(run, events=events)
             return SourceFetchResult(run=run, events=events)
         except FetchError as exc:

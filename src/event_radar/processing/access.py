@@ -17,9 +17,14 @@ from event_radar.models import (
 
 _STUDENT_RE = re.compile(r"\bstudent(?:s)?\s+(ticket|pass|discount|rate|admission|pricing)\b", re.I)
 _STUDENT_ID_RE = re.compile(r"student id|current undergraduate or graduate student", re.I)
-_VOLUNTEER_RE = re.compile(r"\bvolunteer(?:ing|s)?\b.{0,40}\b(apply|application|sign[- ]up|opportunity|call)\b|\b(apply|application).{0,40}\bvolunteer", re.I)
+_VOLUNTEER_RE = re.compile(
+    r"\bvolunteer(?:ing|s)?\b.{0,80}\b(apply|application|sign[- ]up|opportunity|call|reach out|email|inquire)\b"
+    r"|\b(apply|application|reach out|inquire).{0,80}\bvolunteer"
+    r"|can i volunteer\??\s*yes",
+    re.I,
+)
 _VOLUNTEER_WEAK_RE = re.compile(r"\bvolunteer(?:ing)?\b", re.I)
-_FREE_RE = re.compile(r"\b(free admission|free event|no cost|complimentary|free to attend|free ticket)\b", re.I)
+_FREE_RE = re.compile(r"\b(free admission|free event|no cost|free to attend|free ticket)\b", re.I)
 _EARLY_RE = re.compile(r"\bearly[ -]?bird\b", re.I)
 _WAITLIST_RE = re.compile(r"\bwaitlist\b", re.I)
 _APPLY_RE = re.compile(r"\b(apply|application required|request to join|request-to-join|approval required)\b", re.I)
@@ -42,6 +47,19 @@ def extract_access(raw: RawEvent, now: datetime | None = None) -> list[AccessRou
     routes.extend(_from_structured_flags(raw, blob))
     routes.extend(_from_text(raw, blob))
     routes.extend(_from_coupons(raw, blob))
+    for page in (raw.raw or {}).get("related_pages") or []:
+        if not isinstance(page, dict):
+            continue
+        page_url = str(page.get("url") or "")
+        page_text = str(page.get("text") or "")
+        if not page_text:
+            continue
+        related = raw.model_copy(deep=True)
+        related.source_url = page_url or raw.source_url
+        related.description = page_text
+        related_blob = " ".join(p for p in [raw.title, page_text, page_url] if p)
+        routes.extend(_from_text(related, related_blob))
+        routes.extend(_from_coupons(related, related_blob))
 
     return _dedupe_routes(routes)
 
@@ -228,7 +246,13 @@ def _from_text(raw: RawEvent, blob: str) -> list[AccessRoute]:
             extra={"eligibility": "Current undergraduate or graduate student" if _STUDENT_ID_RE.search(blob) else "Student"},
         )
     if _VOLUNTEER_RE.search(blob):
-        add(AccessType.VOLUNTEER, text=_snippet(blob, "volunteer"), confidence=0.75, status=AccessStatus.UNKNOWN)
+        add(
+            AccessType.VOLUNTEER,
+            text=_snippet(blob, "volunteer"),
+            confidence=0.86,
+            status=AccessStatus.OPEN,
+            extra={"eligibility": "Volunteer inquiry"},
+        )
     elif _VOLUNTEER_WEAK_RE.search(blob) and "last year" not in blob.lower():
         add(
             AccessType.VOLUNTEER,

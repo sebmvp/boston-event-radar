@@ -95,3 +95,17 @@ def test_hackathon_participant_route():
     raw = _raw(title="Imaginary Instrument Hackathon", is_free=True, description="Participants welcome")
     routes = extract_access(raw)
     assert any(r.type == AccessType.HACKATHON_PARTICIPANT for r in routes)
+
+
+def test_volunteer_inquiry_from_faq_is_current_with_email():
+    raw = _raw(
+        title="Boston Fintech Week",
+        description="Can I volunteer? Yes! Please reach out to bostonfintechweek@fintechsandbox.org to inquire.",
+        source_url="https://bostonfintechweek.org/faqs/",
+    )
+    routes = extract_access(raw)
+    volunteer = [r for r in routes if r.type == AccessType.VOLUNTEER]
+    assert volunteer
+    assert volunteer[0].observation_kind == ObservationKind.CONFIRMED_CURRENT
+    assert volunteer[0].contact_email == "bostonfintechweek@fintechsandbox.org"
+    assert volunteer[0].confidence >= 0.8

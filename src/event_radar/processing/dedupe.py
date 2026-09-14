@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import re
 from datetime import UTC, datetime, timedelta
+from html import unescape
 from urllib.parse import urlparse
 
 from rapidfuzz import fuzz
 
-from event_radar.models import AccessRoute, EventRecord, SourceRef
+from event_radar.models import AccessRoute, EventRecord, ObservationKind, SourceRef
 
 _PUNCT_RE = re.compile(r"[^\w\s]+", re.UNICODE)
 _YEAR_RE = re.compile(r"\b20\d{2}\b")
@@ -77,7 +78,11 @@ def _aware(value: datetime | None) -> datetime | None:
 
 
 def merge_events(group: list[EventRecord]) -> EventRecord:
-    primary = max(group, key=lambda ev: (len(ev.description or ""), len(ev.access_routes), len(ev.title)))
+    newest = max(group, key=lambda ev: _aware(ev.last_checked_at) or datetime.min.replace(tzinfo=UTC))
+    primary = newest.model_copy(deep=True)
+    primary.title = unescape(primary.title)
+    if primary.description:
+        primary.description = unescape(primary.description)
     sources: list[SourceRef] = []
     seen_sources: set[tuple[str, str]] = set()
     routes: list[AccessRoute] = []
@@ -88,10 +93,27 @@ def merge_events(group: list[EventRecord]) -> EventRecord:
             if key not in seen_sources:
                 seen_sources.add(key)
                 sources.append(src)
-        routes.extend(ev.access_routes)
+        if ev is newest:
+            routes.extend(ev.access_routes)
+        else:
+            ev_checked = _aware(ev.last_checked_at)
+            new_checked = _aware(newest.last_checked_at)
+            same_run = bool(ev_checked and new_checked and abs(ev_checked - new_checked) <= timedelta(minutes=2))
+            for route in ev.access_routes:
+                if route.observation_kind == ObservationKind.CONFIRMED_CURRENT:
+                    routes.append(route)
+                elif same_run:
+                    routes.append(route)
+                elif route.observation_kind == ObservationKind.HISTORICAL and newest.series_id:
+                    routes.append(route)
         for cat in ev.categories:
             if cat not in categories:
                 categories.append(cat)
+        if ev.description and len(ev.description) > len(primary.description or ""):
+            ev_checked = _aware(ev.last_checked_at)
+            pri_checked = _aware(primary.last_checked_at)
+            if ev_checked and pri_checked and ev_checked >= pri_checked - timedelta(minutes=2):
+                primary.description = unescape(ev.description)
         if not primary.organizer and ev.organizer:
             primary.organizer = ev.organizer
         if not primary.venue and ev.venue:
@@ -118,10 +140,21 @@ def merge_events(group: list[EventRecord]) -> EventRecord:
         primary_end = _aware(primary.end_at)
         if ev_end and (primary_end is None or ev_end > primary_end):
             primary.end_at = ev_end
-        if ev.series_id:
-            primary.series_id = ev.series_id
-        primary.last_checked_at = max(_aware(primary.last_checked_at), _aware(ev.last_checked_at))  # type: ignore[arg-type]
-        primary.discovered_at = min(_aware(primary.discovered_at), _aware(ev.discovered_at))  # type: ignore[arg-type]
+        primary_checked = _aware(primary.last_checked_at)
+        ev_checked = _aware(ev.last_checked_at)
+        if primary_checked and ev_checked:
+            primary.last_checked_at = max(primary_checked, ev_checked)
+        elif ev_checked:
+            primary.last_checked_at = ev_checked
+        primary_disc = _aware(primary.discovered_at)
+        ev_disc = _aware(ev.discovered_at)
+        if primary_disc and ev_disc:
+            primary.discovered_at = min(primary_disc, ev_disc)
+        elif ev_disc:
+            primary.discovered_at = ev_disc
+    primary.series_id = newest.series_id
+    if not newest.series_id:
+        routes = [r for r in routes if r.observation_kind != ObservationKind.HISTORICAL]
     primary.sources = sources
     primary.categories = categories
     primary.access_routes = _merge_routes(routes)

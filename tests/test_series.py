@@ -34,3 +34,21 @@ def test_series_match_and_historical_not_current():
     score = score_event(event, load_profile(), now=now)
     assert score.total > 0
     assert "volunteer" not in " ".join(r.type.value for r in event.access_routes if r.observation_kind == ObservationKind.CONFIRMED_CURRENT)
+
+
+def test_satellite_fintech_event_is_not_the_week():
+    now = datetime(2026, 9, 11, tzinfo=UTC)
+    raw = RawEvent(
+        source_id="x",
+        source_type="luma_discover",
+        source_url="https://luma.com/fzwj0mfg",
+        title="Fintech that Thinks: Career Advisory and Networking Summit",
+        organizer="Someone",
+        city="Boston",
+        start_at=datetime(2026, 9, 25, tzinfo=UTC),
+        fetched_at=now,
+        canonical_url="https://luma.com/fzwj0mfg",
+    )
+    event = normalize(raw, now=now)
+    series_list = [RecurringSeries.model_validate(s) for s in load_series()["series"]]
+    assert match_series(event, series_list) is None

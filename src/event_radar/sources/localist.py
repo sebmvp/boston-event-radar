@@ -60,14 +60,18 @@ def raw_from_localist(item: dict[str, Any], *, source_id: str, org: str | None, 
     loc_mode = LocationMode.VIRTUAL if (event.get("stream_url") and not event.get("location_name")) else LocationMode.IN_PERSON
     if event.get("experience") == "virtual":
         loc_mode = LocationMode.VIRTUAL
-    tags = [t.get("name") if isinstance(t, dict) else str(t) for t in (event.get("tags") or [])]
+    tags: list[str] = []
+    for t in event.get("tags") or []:
+        name = t.get("name") if isinstance(t, dict) else str(t)
+        if name:
+            tags.append(str(name))
     filters = event.get("filters") or {}
     for group in filters.values() if isinstance(filters, dict) else []:
         if isinstance(group, list):
             for node in group:
                 name = node.get("name") if isinstance(node, dict) else None
                 if name:
-                    tags.append(name)
+                    tags.append(str(name))
     return RawEvent(
         source_id=source_id,
         source_type="localist",
